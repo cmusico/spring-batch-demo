@@ -1,10 +1,10 @@
 ### Package the application
 
-`./mvnw package -Dmaven.test.skip=true`
+`./mvnw clean package -Dmaven.test.skip=true`
 
 ### Launch the job and pass the input file as a parameter with the following command
 
-`java -jar target/billing-job-0.0.1-SNAPSHOT.jar input.file=src/main/resources/billing-2023-01.csv`
+`java -jar target/billing-job-0.0.1-SNAPSHOT.jar input.file=input/billing-2023-01.csv output.file=staging/billing-report-2023-01.csv data.year=2023 data.month=1`
 
 ### Run the tests
 
