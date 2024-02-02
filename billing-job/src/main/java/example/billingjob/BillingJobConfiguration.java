@@ -69,8 +69,15 @@ public class BillingJobConfiguration {
     }
 
     @Bean
+    @StepScope
+    public BillingDataSkipListener skipListener(@Value("#{jobParameters['skip.file']}") String skippedFile) {
+        return new BillingDataSkipListener(skippedFile);
+    }
+
+    @Bean
     public Step step2(JobRepository jobRepository, JdbcTransactionManager transactionManager,
-                      ItemReader<BillingData> billingDataFileReader, ItemWriter<BillingData> billingDataTableWriter,
+                      ItemReader<BillingData> billingDataFileReader,
+                      ItemWriter<BillingData> billingDataTableWriter,
                       BillingDataSkipListener skipListener) {
         return new StepBuilder("fileIngestion", jobRepository)
                 .<BillingData, BillingData>chunk(100, transactionManager)
@@ -96,8 +103,8 @@ public class BillingJobConfiguration {
     }
 
     @Bean
-    public BillingDataProcessor billingDataProcessor() {
-        return new BillingDataProcessor();
+    public BillingDataProcessor billingDataProcessor(PricingService pricingService) {
+        return new BillingDataProcessor(pricingService);
     }
 
     @Bean
@@ -121,13 +128,15 @@ public class BillingJobConfiguration {
                 .reader(billingDataTableReader)
                 .processor(billingDataProcessor)
                 .writer(billingDataFileWriter)
+                .faultTolerant()
+                .retry(PricingException.class)
+                .retryLimit(100)
                 .build();
     }
 
     @Bean
-    @StepScope
-    public BillingDataSkipListener skipListener(@Value("#{jobParameters['skip.file']}") String skippedFile) {
-        return new BillingDataSkipListener(skippedFile);
+    public PricingService pricingService() {
+        return  new PricingService();
     }
 
 
